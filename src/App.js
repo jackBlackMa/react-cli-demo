@@ -5,10 +5,9 @@ import './style/App.css'
 * @ desc 棋盘方格
 * */
 class Square extends Component {
-
   render() {
     return (
-      <button onClick={this.props.onClick}>
+      <button onClick={this.props.onClick} className='square'>
         {this.props.value}
       </button>
     )
@@ -26,7 +25,7 @@ class Board extends Component {
       onClick={() => this.props.handleClick(i)}
     />
   }
-
+  // 棋盘
   render() {
     return (
       <div>
@@ -60,12 +59,13 @@ class Game extends React.Component {
           squares: Array(9).fill(null)
         }
       ],
-      xIsNext: true
+      stepNumber: 0, //步数
+      xIsNext: true,
     }
   }
 
   handleClick(i) {
-    const {history} = this.state;
+    const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
     // 当有玩家胜出时，或者某个 Square 已经被填充时，该函数不做任何处理直接返回。
@@ -76,12 +76,20 @@ class Game extends React.Component {
     this.setState({
       history: history.concat([{squares}]),
       xIsNext: !this.state.xIsNext,
+      stepNumber: history.length,
+    })
+  }
+
+  jumpTo(step) {
+    this.setState({
+      stepNumber: step,
+      xIsNext: (step % 2) === 0,
     })
   }
 
   render() {
-    const {history} = this.state;
-    const current = history[history.length - 1];
+    const {history, stepNumber} = this.state;
+    const current = history[stepNumber];
     const winner = calculateWinner(current.squares);
     let status;
     if (winner) {
@@ -89,6 +97,19 @@ class Game extends React.Component {
     } else {
       status = `Next player：${this.state.xIsNext ? 'X' : 'O'}`;
     }
+
+    const moves = history.map((step, move) => {
+      const desc = move ?
+        `Go to move ${move}` :
+        'Go to game start';
+      return (
+        <li key={move}>
+          <button onClick={() => this.jumpTo(move)}>{desc}</button>
+        </li>
+      )
+
+    });
+
     return (
       <div className="game">
         <div className="game-board">
@@ -99,7 +120,7 @@ class Game extends React.Component {
         </div>
         <div className="game-info">
           <div>{status}</div>
-          <ol>{/* TODO */}</ol>
+          <ol>{moves}</ol>
         </div>
       </div>
     );
